@@ -1,0 +1,2009 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chicago Atlantic | REFI & LIEN Performance Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg-primary: #0d1117;
+      --bg-secondary: #161b22;
+      --bg-card: #1c2128;
+      --bg-card-hover: #22272e;
+      --accent-green: #2ea043;
+      --accent-green-light: #3fb950;
+      --accent-blue: #1f6feb;
+      --accent-gold: #d29922;
+      --accent-gold-light: #e3b341;
+      --accent-purple: #8957e5;
+      --accent-teal: #2188ff;
+      --text-primary: #e6edf3;
+      --text-secondary: #8b949e;
+      --text-muted: #6e7681;
+      --border: #30363d;
+      --border-subtle: #21262d;
+      --refi-color: #4fc3f7;
+      --lien-color: #a5d6a7;
+      --cannabis-color: #66bb6a;
+      --danger: #f85149;
+      --warning: #e3b341;
+      --success: #3fb950;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      width: 1400px;
+      min-height: 900px;
+      overflow-x: hidden;
+      font-size: 13px;
+    }
+
+    /* ── TOP HEADER BAR ─────────────────────────────────────── */
+    .header {
+      background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1f0d 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(46, 160, 67, 0.05) 50%, transparent 100%);
+      pointer-events: none;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-badge {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--accent-green), #0d4a1a);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 16px;
+      color: white;
+      box-shadow: 0 0 20px rgba(46, 160, 67, 0.3);
+      flex-shrink: 0;
+    }
+
+    .header-titles h1 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+    }
+
+    .header-titles p {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 1px;
+    }
+
+    .header-pills {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .pill {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .pill-refi {
+      background: rgba(79, 195, 247, 0.15);
+      color: var(--refi-color);
+      border: 1px solid rgba(79, 195, 247, 0.3);
+    }
+
+    .pill-lien {
+      background: rgba(165, 214, 167, 0.15);
+      color: var(--lien-color);
+      border: 1px solid rgba(165, 214, 167, 0.3);
+    }
+
+    .pill-cannabis {
+      background: rgba(102, 187, 106, 0.15);
+      color: var(--cannabis-color);
+      border: 1px solid rgba(102, 187, 106, 0.3);
+    }
+
+    .header-meta {
+      text-align: right;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .header-meta strong {
+      display: block;
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+
+    /* ── MAIN LAYOUT ─────────────────────────────────────────── */
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      grid-template-rows: auto auto auto auto;
+      gap: 10px;
+      padding: 12px 16px;
+    }
+
+    /* ── CARDS ───────────────────────────────────────────────── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card:hover {
+      border-color: rgba(79, 195, 247, 0.3);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-title {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .card-title .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── KPI ROW ─────────────────────────────────────────────── */
+    .kpi-row {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 8px;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.2s;
+    }
+
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+    }
+
+    .kpi-card.refi::before {
+      background: var(--refi-color);
+    }
+
+    .kpi-card.lien::before {
+      background: var(--lien-color);
+    }
+
+    .kpi-card.cannabis::before {
+      background: var(--cannabis-color);
+    }
+
+    .kpi-card.gold::before {
+      background: var(--accent-gold-light);
+    }
+
+    .kpi-card:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .kpi-label {
+      font-size: 9.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+      white-space: nowrap;
+    }
+
+    .kpi-value {
+      font-size: 22px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.5px;
+      margin-bottom: 3px;
+    }
+
+    .kpi-value.refi-color {
+      color: var(--refi-color);
+    }
+
+    .kpi-value.lien-color {
+      color: var(--lien-color);
+    }
+
+    .kpi-value.green {
+      color: var(--success);
+    }
+
+    .kpi-value.gold {
+      color: var(--accent-gold-light);
+    }
+
+    .kpi-sub {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .kpi-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-top: 2px;
+    }
+
+    .badge-up {
+      background: rgba(63, 185, 80, 0.15);
+      color: var(--success);
+    }
+
+    .badge-down {
+      background: rgba(248, 81, 73, 0.15);
+      color: var(--danger);
+    }
+
+    .badge-neutral {
+      background: rgba(139, 148, 158, 0.15);
+      color: var(--text-secondary);
+    }
+
+    /* ── SPANS ───────────────────────────────────────────────── */
+    .span-2 {
+      grid-column: span 2;
+    }
+
+    .span-3 {
+      grid-column: span 3;
+    }
+
+    .span-full {
+      grid-column: 1 / -1;
+    }
+
+    /* ── CHART WRAPPERS ──────────────────────────────────────── */
+    .chart-container {
+      position: relative;
+      width: 100%;
+    }
+
+    /* ── THESIS BANNER ───────────────────────────────────────── */
+    .thesis-banner {
+      grid-column: 1 / -1;
+      background: linear-gradient(135deg, rgba(46, 160, 67, 0.12) 0%, rgba(31, 111, 235, 0.08) 100%);
+      border: 1px solid rgba(46, 160, 67, 0.25);
+      border-radius: 10px;
+      padding: 10px 16px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .thesis-icon {
+      width: 36px;
+      height: 36px;
+      background: rgba(46, 160, 67, 0.2);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .thesis-text h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .thesis-text p {
+      font-size: 11px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .thesis-metrics {
+      display: flex;
+      gap: 20px;
+    }
+
+    .thesis-metric {
+      text-align: center;
+    }
+
+    .thesis-metric .tm-val {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--success);
+    }
+
+    .thesis-metric .tm-lab {
+      font-size: 9px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── DIVIDERS ────────────────────────────────────────────── */
+    .section-label {
+      grid-column: 1 / -1;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      padding: 4px 0 0;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-subtle);
+    }
+
+    /* ── PORTFOLIO TABLE ─────────────────────────────────────── */
+    .mini-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .mini-table th {
+      font-size: 9.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      text-align: left;
+      padding: 4px 6px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .mini-table td {
+      font-size: 11px;
+      padding: 5px 6px;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      vertical-align: middle;
+    }
+
+    .mini-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .mini-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .mono {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 11px;
+    }
+
+    .text-right {
+      text-align: right;
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      margin-right: 4px;
+    }
+
+    .status-performing {
+      background: var(--success);
+      box-shadow: 0 0 6px rgba(63, 185, 80, 0.5);
+    }
+
+    /* ── RISK MATRIX ─────────────────────────────────────────── */
+    .risk-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .risk-item {
+      background: var(--bg-secondary);
+      border-radius: 6px;
+      padding: 8px 10px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .risk-label {
+      font-size: 9.5px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 3px;
+    }
+
+    .risk-val {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .risk-desc {
+      font-size: 9.5px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    /* ── DONUT LEGEND ────────────────────────────────────────── */
+    .legend-list {
+      list-style: none;
+      margin-top: 6px;
+    }
+
+    .legend-list li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 3px 0;
+      font-size: 11px;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .legend-list li:last-child {
+      border-bottom: none;
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      margin-right: 6px;
+      flex-shrink: 0;
+    }
+
+    .legend-left {
+      display: flex;
+      align-items: center;
+    }
+
+    .legend-pct {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 11px;
+    }
+
+    /* ── SPARKLINE ───────────────────────────────────────────── */
+    .sparkline-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .sparkline-row:last-child {
+      border-bottom: none;
+    }
+
+    .sparkline-label {
+      font-size: 10px;
+      color: var(--text-secondary);
+      width: 80px;
+      flex-shrink: 0;
+    }
+
+    .sparkline-bar-wrap {
+      flex: 1;
+      height: 16px;
+      background: var(--bg-secondary);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .sparkline-bar {
+      height: 100%;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      padding-left: 6px;
+      font-size: 9px;
+      font-weight: 700;
+      color: white;
+    }
+
+    /* ── MOAT ANALYSIS ───────────────────────────────────────── */
+    .moat-items {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .moat-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 6px 8px;
+      background: var(--bg-secondary);
+      border-radius: 6px;
+      border-left: 2px solid var(--success);
+    }
+
+    .moat-icon {
+      font-size: 14px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .moat-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .moat-desc {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 1px;
+      line-height: 1.3;
+    }
+
+    /* ── WATERMARK / FOOTER ──────────────────────────────────── */
+    .footer {
+      padding: 6px 16px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--border-subtle);
+      font-size: 9.5px;
+      color: var(--text-muted);
+    }
+
+    .footer a {
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+
+    /* ── Illinois Map Visual ─────────────────────────────────── */
+    .il-stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .il-stat {
+      background: var(--bg-secondary);
+      border-radius: 6px;
+      padding: 8px 10px;
+      border: 1px solid var(--border-subtle);
+      text-align: center;
+    }
+
+    .il-stat .val {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--cannabis-color);
+    }
+
+    .il-stat .lab {
+      font-size: 9px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+    }
+
+    /* ── Progress / Gauge ────────────────────────────────────── */
+    .gauge-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      margin-top: 6px;
+    }
+
+    .gauge-item {
+      display: block;
+    }
+
+    .gauge-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      margin-bottom: 3px;
+      color: var(--text-secondary);
+    }
+
+    .gauge-header span:last-child {
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .gauge-track {
+      height: 8px;
+      background: var(--bg-secondary);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .gauge-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 1s ease;
+    }
+
+    /* Animated counter */
+    @keyframes countup {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .kpi-value {
+      animation: countup 0.5s ease forwards;
+    }
+
+    /* ── Tab Navigation ──────────────────────────────────────── */
+    .tab-nav {
+      display: flex;
+      gap: 0;
+      padding: 0 16px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tab-btn {
+      padding: 10px 20px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border: none;
+      background: none;
+      border-bottom: 2px solid transparent;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s;
+      letter-spacing: 0.3px;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-secondary);
+    }
+
+    .tab-btn.active {
+      color: var(--accent-green-light);
+      border-bottom-color: var(--accent-green-light);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* ── SQL & Methodology Sheets ──────────────────────────── */
+    .doc-sheet {
+      padding: 20px 24px;
+      max-width: 1400px;
+    }
+
+    .doc-sheet h2 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text-primary);
+    }
+
+    .doc-sheet h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin: 16px 0 8px;
+      color: var(--refi-color);
+    }
+
+    .doc-sheet p,
+    .doc-sheet li {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .doc-sheet ul {
+      padding-left: 20px;
+      margin-bottom: 10px;
+    }
+
+    .sql-block {
+      background: #161b22;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin: 8px 0 16px;
+      overflow-x: auto;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 11.5px;
+      color: #e6edf3;
+      line-height: 1.6;
+      white-space: pre;
+    }
+
+    .sql-keyword {
+      color: #ff7b72;
+      font-weight: 600;
+    }
+
+    .sql-func {
+      color: #d2a8ff;
+    }
+
+    .sql-string {
+      color: #a5d6ff;
+    }
+
+    .sql-comment {
+      color: #8b949e;
+      font-style: italic;
+    }
+
+    .step-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+    }
+
+    .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 700;
+      background: rgba(46, 160, 67, 0.2);
+      color: var(--accent-green-light);
+      margin-right: 8px;
+    }
+
+    .step-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .step-desc {
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      margin-top: 6px;
+      line-height: 1.6;
+    }
+
+    .data-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      background: rgba(79, 195, 247, 0.15);
+      color: var(--refi-color);
+      border: 1px solid rgba(79, 195, 247, 0.3);
+      margin: 2px 4px 2px 0;
+    }
+
+    /* ── Scrollbar ───────────────────────────────────────────── */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-primary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 2px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ═══════════════════════ HEADER BAR ═══════════════════════ -->
+  <div class="header">
+    <div class="header-left">
+      <div class="logo-badge">CA</div>
+      <div class="header-titles">
+        <h1>Chicago Atlantic | Investment Platform Intelligence</h1>
+        <p>REFI (mREIT) · LIEN (BDC) · Illinois Cannabis Portfolio · Credit Quality</p>
+      </div>
+    </div>
+    <div class="header-pills">
+      <span class="pill pill-refi">NASDAQ: REFI</span>
+      <span class="pill pill-lien">NASDAQ: LIEN</span>
+      <span class="pill pill-cannabis">16% IL Cannabis</span>
+    </div>
+    <div class="header-meta">
+      <strong>FY 2024 Full-Year Results</strong>
+      Data as of December 31, 2024 &nbsp;|&nbsp; Prepared: March 2025 &nbsp;|&nbsp; Analyst: Abel P.
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ TAB NAVIGATION ═══════════════════ -->
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+    <button class="tab-btn" onclick="switchTab('sql')">🗄️ SQL Queries</button>
+    <button class="tab-btn" onclick="switchTab('methodology')">📋 Methodology & Research</button>
+  </div>
+
+  <!-- ═══════════════════════ TAB 1: DASHBOARD ═════════════════ -->
+  <div id="tab-dashboard" class="tab-content active">
+
+    <!-- ═══════════════════════ DASHBOARD GRID ══════════════════ -->
+    <div class="dashboard">
+
+      <!-- ── THESIS BANNER ── -->
+      <div class="thesis-banner">
+        <div class="thesis-icon">💡</div>
+        <div class="thesis-text">
+          <h3>Investment Thesis: Regulated-State Cannabis Lending Delivers Superior Risk-Adjusted Returns</h3>
+          <p>Chicago Atlantic operates at the intersection of private credit and alternative assets — originating
+            senior-secured loans to compliant cannabis operators in supply-constrained, limited-license states. Banking
+            exclusion creates structural yield premiums unavailable in conventional credit markets.</p>
+        </div>
+        <div class="thesis-metrics">
+          <div class="thesis-metric">
+            <div class="tm-val">17.2%</div>
+            <div class="tm-lab">REFI Wtd. Yield</div>
+          </div>
+          <div class="thesis-metric">
+            <div class="tm-val">16.5%</div>
+            <div class="tm-lab">LIEN Gross Yield</div>
+          </div>
+          <div class="thesis-metric">
+            <div class="tm-val">0</div>
+            <div class="tm-lab">Non-Accruals</div>
+          </div>
+          <div class="thesis-metric">
+            <div class="tm-val">$2.0B+</div>
+            <div class="tm-lab">IL 2024 Sales</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── KPI ROW ── -->
+      <div class="kpi-row">
+        <div class="kpi-card refi">
+          <div class="kpi-label">REFI Loan Portfolio</div>
+          <div class="kpi-value refi-color">$410M</div>
+          <div class="kpi-sub">30 portfolio companies</div>
+          <div class="kpi-badge badge-up">▲ +$27M Q4</div>
+        </div>
+        <div class="kpi-card refi">
+          <div class="kpi-label">REFI Distrib. EPS</div>
+          <div class="kpi-value refi-color">$2.03</div>
+          <div class="kpi-sub">Per diluted share, FY 2024</div>
+          <div class="kpi-badge badge-up">▲ vs $1.88 net EPS</div>
+        </div>
+        <div class="kpi-card refi">
+          <div class="kpi-label">REFI Dividend/Share</div>
+          <div class="kpi-value refi-color">$2.06</div>
+          <div class="kpi-sub">Incl. $0.18 special div.</div>
+          <div class="kpi-badge badge-up">16.8% fwd yield</div>
+        </div>
+        <div class="kpi-card refi">
+          <div class="kpi-label">REFI Book Value/Share</div>
+          <div class="kpi-value refi-color">$14.83</div>
+          <div class="kpi-sub">NAV as of Dec 31, 2024</div>
+          <div class="kpi-badge badge-down">▼ $0.11 vs Dec'23</div>
+        </div>
+        <div class="kpi-card lien">
+          <div class="kpi-label">LIEN Portfolio FMV</div>
+          <div class="kpi-value lien-color">$275M</div>
+          <div class="kpi-sub">100% senior secured</div>
+          <div class="kpi-badge badge-up">▲ Acq. completed Oct'24</div>
+        </div>
+        <div class="kpi-card lien">
+          <div class="kpi-label">LIEN NAV/Share</div>
+          <div class="kpi-value lien-color">$13.20</div>
+          <div class="kpi-sub">Net assets: $301.2M total</div>
+          <div class="kpi-badge badge-down">▼ vs $13.77 Dec'23</div>
+        </div>
+        <div class="kpi-card lien">
+          <div class="kpi-label">LIEN Q4 Dividend</div>
+          <div class="kpi-value lien-color">$0.34</div>
+          <div class="kpi-sub">+36% vs Q3 2024 ($0.25)</div>
+          <div class="kpi-badge badge-up">13.6% fwd yield</div>
+        </div>
+        <div class="kpi-card gold">
+          <div class="kpi-label">Secured Net Leverage</div>
+          <div class="kpi-value gold">1.5×</div>
+          <div class="kpi-sub">LIEN portfolio companies</div>
+          <div class="kpi-badge badge-up">Conservative LTV</div>
+        </div>
+      </div>
+
+      <!-- ── ROW 2: Left Charts + Table ── -->
+
+      <!-- Yield Comparison Bar Chart -->
+      <div class="card span-2">
+        <div class="card-title">
+          <span class="dot" style="background:var(--refi-color)"></span>
+          Portfolio Yield Benchmarking — Cannabis Credit Premium
+        </div>
+        <div class="chart-container" style="height:170px">
+          <canvas id="yieldChart"></canvas>
+        </div>
+      </div>
+
+      <!-- LIEN Portfolio Composition Donut -->
+      <div class="card">
+        <div class="card-title">
+          <span class="dot" style="background:var(--cannabis-color)"></span>
+          LIEN Portfolio Composition
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div class="chart-container" style="height:130px; width:130px; flex-shrink:0;">
+            <canvas id="donutChart"></canvas>
+          </div>
+          <ul class="legend-list" style="flex:1">
+            <li><span class="legend-left"><span class="legend-dot"
+                  style="background:#66bb6a"></span>Cannabis</span><span class="legend-pct">78%</span></li>
+            <li><span class="legend-left"><span class="legend-dot" style="background:#4fc3f7"></span>Life
+                Sciences</span><span class="legend-pct">10%</span></li>
+            <li><span class="legend-left"><span class="legend-dot"
+                  style="background:#8957e5"></span>Healthcare</span><span class="legend-pct">7%</span></li>
+            <li><span class="legend-left"><span class="legend-dot" style="background:#e3b341"></span>Other
+                Alt.</span><span class="legend-pct">5%</span></li>
+          </ul>
+        </div>
+        <div
+          style="margin-top:8px; padding:6px 8px; background:rgba(102,187,106,0.08); border-radius:5px; border:1px solid rgba(102,187,106,0.2); font-size:10px; color:var(--text-muted);">
+          🔒 80% floating-rate loans · 99% w/ floors · 0 non-accruals
+        </div>
+      </div>
+
+      <!-- Illinois Cannabis Market Card -->
+      <div class="card">
+        <div class="card-title">
+          <span class="dot" style="background:var(--cannabis-color)"></span>
+          Illinois Cannabis Market (2024)
+        </div>
+        <div class="il-stat-grid">
+          <div class="il-stat">
+            <div class="val">$2.0B+</div>
+            <div class="lab">Total Sales</div>
+          </div>
+          <div class="il-stat">
+            <div class="val">#3</div>
+            <div class="lab">US Market Rank</div>
+          </div>
+          <div class="il-stat">
+            <div class="val">4th</div>
+            <div class="lab">Record Year</div>
+          </div>
+          <div class="il-stat">
+            <div class="val">+13%</div>
+            <div class="lab">Units Sold YoY</div>
+          </div>
+        </div>
+        <div style="margin-top:8px; font-size:10px; color:var(--text-muted); line-height:1.4;">
+          ✅ Limited-license structure creates a <strong style="color:var(--cannabis-color)">banking exclusion
+            moat</strong> — federal prohibition restricts traditional lenders, enabling CA premium pricing.
+        </div>
+      </div>
+
+      <!-- ── ROW 3: REFI Dividend History · Credit Quality · Moat ── -->
+
+      <!-- REFI Quarterly Financials Trend -->
+      <div class="card span-2">
+        <div class="card-title">
+          <span class="dot" style="background:var(--refi-color)"></span>
+          REFI — Quarterly Net Interest Income & Distributable Earnings (2024)
+        </div>
+        <div class="chart-container" style="height:160px">
+          <canvas id="trendChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Credit Quality Gauges -->
+      <div class="card">
+        <div class="card-title">
+          <span class="dot" style="background:var(--success)"></span>
+          Credit Quality Scorecard
+        </div>
+        <div class="gauge-stack">
+          <div class="gauge-item">
+            <div class="gauge-header"><span>Senior-Secured Coverage</span><span>100%</span></div>
+            <div class="gauge-track">
+              <div class="gauge-fill" style="width:100%; background: linear-gradient(90deg, #2ea043, #3fb950);"></div>
+            </div>
+          </div>
+          <div class="gauge-item">
+            <div class="gauge-header"><span>Floating-Rate Loans (LIEN)</span><span>80%</span></div>
+            <div class="gauge-track">
+              <div class="gauge-fill" style="width:80%; background: linear-gradient(90deg, #2ea043, #4fc3f7);"></div>
+            </div>
+          </div>
+          <div class="gauge-item">
+            <div class="gauge-header"><span>Loans w/ Interest Rate Floors</span><span>99%</span></div>
+            <div class="gauge-track">
+              <div class="gauge-fill" style="width:99%; background: linear-gradient(90deg, #8957e5, #4fc3f7);"></div>
+            </div>
+          </div>
+          <div class="gauge-item">
+            <div class="gauge-header"><span>Limited-License State Exposure</span><span>~90%</span></div>
+            <div class="gauge-track">
+              <div class="gauge-fill" style="width:90%; background: linear-gradient(90deg, #d29922, #e3b341);"></div>
+            </div>
+          </div>
+          <div class="gauge-item">
+            <div class="gauge-header"><span>Non-Accrual Rate</span><span style="color:var(--success)">0%</span></div>
+            <div class="gauge-track">
+              <div class="gauge-fill" style="width:2%; background: var(--success);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Competitive Moat Analysis -->
+      <div class="card">
+        <div class="card-title">
+          <span class="dot" style="background:var(--accent-gold-light)"></span>
+          Structural Moat — Why CA Earns 17%+
+        </div>
+        <div class="moat-items">
+          <div class="moat-item">
+            <div class="moat-icon">🏛️</div>
+            <div>
+              <div class="moat-title">Banking Exclusion Premium</div>
+              <div class="moat-desc">Federal prohibition locks out traditional lenders; CA captures 800–1000 bps premium
+                over leveraged loans</div>
+            </div>
+          </div>
+          <div class="moat-item">
+            <div class="moat-icon">🔑</div>
+            <div>
+              <div class="moat-title">Limited-License Scarcity</div>
+              <div class="moat-desc">~25 licensed states cap operator count, creating monopoly-like cash flows that
+                service debt reliably</div>
+            </div>
+          </div>
+          <div class="moat-item">
+            <div class="moat-icon">🔒</div>
+            <div>
+              <div class="moat-title">First-Lien Collateral Stack</div>
+              <div class="moat-desc">Real estate, equipment, IP & licenses secure loans; 1.5× net leverage leaves
+                significant cushion</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ROW 4: Portfolio Table + Geographic + State Comparison ── -->
+
+      <!-- REFI Portfolio Composition Table -->
+      <div class="card span-2">
+        <div class="card-title">
+          <span class="dot" style="background:var(--refi-color)"></span>
+          REFI — Illustrative Senior Lien Portfolio (30 Companies, $410M)
+        </div>
+        <table class="mini-table">
+          <thead>
+            <tr>
+              <th>Borrower Type</th>
+              <th>State Tier</th>
+              <th>Collateral</th>
+              <th class="text-right">Est. Alloc.</th>
+              <th class="text-right">Indicative Yield</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Multi-State Operator (MSO)</td>
+              <td>Tier 1</td>
+              <td>RE + Equipment</td>
+              <td class="text-right mono">~35%</td>
+              <td class="text-right mono" style="color:var(--success)">15–16%</td>
+              <td><span class="status-dot status-performing"></span>Performing</td>
+            </tr>
+            <tr>
+              <td>Single-State Operator</td>
+              <td>Tier 1</td>
+              <td>License + RE</td>
+              <td class="text-right mono">~30%</td>
+              <td class="text-right mono" style="color:var(--success)">17–19%</td>
+              <td><span class="status-dot status-performing"></span>Performing</td>
+            </tr>
+            <tr>
+              <td>Cultivator / Processor</td>
+              <td>Tier 2</td>
+              <td>Equipment + Recv.</td>
+              <td class="text-right mono">~20%</td>
+              <td class="text-right mono" style="color:var(--success)">18–20%</td>
+              <td><span class="status-dot status-performing"></span>Performing</td>
+            </tr>
+            <tr>
+              <td>Dispensary Retail Chain</td>
+              <td>Tier 1/2</td>
+              <td>License + Inventory</td>
+              <td class="text-right mono">~10%</td>
+              <td class="text-right mono" style="color:var(--accent-gold-light)">16–17%</td>
+              <td><span class="status-dot status-performing"></span>Performing</td>
+            </tr>
+            <tr>
+              <td>Bridge / Expansion Loan</td>
+              <td>Various</td>
+              <td>Mixed Senior</td>
+              <td class="text-right mono">~5%</td>
+              <td class="text-right mono" style="color:var(--accent-gold-light)">19–22%</td>
+              <td><span class="status-dot status-performing"></span>Performing</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="margin-top:6px; font-size:9.5px; color:var(--text-muted); font-style:italic;">
+          * Composition estimates based on public disclosures. All loans senior-secured. Wtd. avg. YTM: 17.2% (Dec 31,
+          2024).
+        </div>
+      </div>
+
+      <!-- State Exposure Bars -->
+      <div class="card">
+        <div class="card-title">
+          <span class="dot" style="background:var(--accent-purple)"></span>
+          REFI Geographic Mix — Top 10 States ($400M Portfolio)
+        </div>
+        <div class="gauge-stack">
+          <div class="gauge-item">
+            <div class="gauge-header"><span>Illinois 🌿</span><span style="color:var(--cannabis-color)">19% ·
+                $77.4M</span></div>
+            <div class="gauge-track">
+              <div class="gauge-fill" style="width:19%; background: var(--cannabis-color);"></div>
+            </div>
+          </div>
+          <div class="gauge-item">
+            <div class="gauge-header"><span>Ohio</span><span>16% · $65.1M</span></div>
+            <div class="gauge-track">
+              <div class="gauge-fill" style="width:16%; background: var(--refi-color);"></div>
+            </div>
+          </div>
+          <div class="gauge-item">
+            <div class="gauge-header"><span>Florida</span><span>14% · $57.0M</span></div>
+            <div class="gauge-track">
+              <div class="gauge-fill" style="width:14%; background: var(--refi-color);"></div>
+            </div>
+          </div>
+          <div class="gauge-item">
+            <div class="gauge-header"><span>Pennsylvania</span><span>9% · $36.3M</span></div>
+            <div class="gauge-track">
+              <div class="gauge-fill" style="width:9%; background: var(--accent-gold-light);"></div>
+            </div>
+          </div>
+          <div class="gauge-item">
+            <div class="gauge-header"><span>Michigan</span><span>8% · $32.1M</span></div>
+            <div class="gauge-track">
+              <div class="gauge-fill" style="width:8%; background: var(--accent-gold-light);"></div>
+            </div>
+          </div>
+          <div class="gauge-item">
+            <div class="gauge-header"><span>Other (AZ, CA, MO, NY, etc.)</span><span>34% · $132.0M</span></div>
+            <div class="gauge-track">
+              <div class="gauge-fill" style="width:34%; background: var(--text-muted);"></div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:6px; font-size:9.5px; color:var(--text-muted);">Source: REFI GEOGRAPHY.csv — 18 states,
+          total $399.9M. ~90% limited-license state concentration.</div>
+      </div>
+
+      <!-- REFI vs LIEN Comparative -->
+      <div class="card">
+        <div class="card-title">
+          <span class="dot" style="background:var(--accent-gold-light)"></span>
+          REFI vs. LIEN — Side-by-Side Snapshot
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:2px;">
+          <div
+            style="background:rgba(79,195,247,0.06); border:1px solid rgba(79,195,247,0.2); border-radius:6px; padding:8px;">
+            <div style="font-size:10px; font-weight:700; color:var(--refi-color); margin-bottom:4px;">REFI (mREIT)</div>
+            <div style="font-size:9.5px; color:var(--text-muted); line-height:1.6;">
+              Structure: mREIT<br>
+              AUM: <strong style="color:var(--text-primary)">$410M</strong><br>
+              Yield: <strong style="color:var(--success)">17.2%</strong><br>
+              Div. Yield: <strong style="color:var(--success)">16.8%</strong><br>
+              NAV/sh: <strong>$14.83</strong><br>
+              Focus: Senior Secured<br>
+              Cannabis: ~95%
+            </div>
+          </div>
+          <div
+            style="background:rgba(165,214,167,0.06); border:1px solid rgba(165,214,167,0.2); border-radius:6px; padding:8px;">
+            <div style="font-size:10px; font-weight:700; color:var(--lien-color); margin-bottom:4px;">LIEN (BDC)</div>
+            <div style="font-size:9.5px; color:var(--text-muted); line-height:1.6;">
+              Structure: BDC<br>
+              FMV: <strong style="color:var(--text-primary)">$275M</strong><br>
+              Yield: <strong style="color:var(--success)">16.5%</strong><br>
+              Div. Yield: <strong style="color:var(--success)">13.6%</strong><br>
+              NAV/sh: <strong>$13.20</strong><br>
+              Focus: Diversifying<br>
+              Cannabis: 78%
+            </div>
+          </div>
+        </div>
+        <div
+          style="margin-top:6px; padding:5px 8px; background:rgba(227,179,65,0.08); border-radius:5px; border:1px solid rgba(227,179,65,0.2); font-size:9.5px; color:var(--text-muted);">
+          ⚡ <strong style="color:var(--accent-gold-light)">Combined AUM ~$685M</strong> — two complementary vehicles
+          targeting same structural alpha
+        </div>
+      </div>
+
+
+      <!-- ── ROW 5: Data Charts from CSVs ── -->
+      <div class="section-label" style="grid-column: 1 / -1;">📈 Market & Credit Data — Sourced from CSV Datasets</div>
+
+      <!-- REFI & LIEN Stock Price Chart (span-2) -->
+      <div class="card span-2">
+        <div class="card-title">
+          <span class="dot" style="background:var(--refi-color)"></span>
+          REFI & LIEN — 24-Month Stock Price History (Monthly Close, $)
+        </div>
+        <div class="chart-container" style="height:160px">
+          <canvas id="stockChart"></canvas>
+        </div>
+        <div style="margin-top:5px; font-size:9.5px; color:var(--text-muted);">Source: NASDAQ historical data CSVs. REFI
+          trading range ~$11.88–$16.47 (2024–2025). LIEN IPO Oct 2024 at ~$10, stabilized $10–$13.</div>
+      </div>
+
+      <!-- REFI Risk Rating Vintage Distribution -->
+      <div class="card">
+        <div class="card-title">
+          <span class="dot" style="background:var(--accent-gold-light)"></span>
+          REFI Risk Rating Distribution by Vintage ($M)
+        </div>
+        <div class="chart-container" style="height:140px">
+          <canvas id="riskChart"></canvas>
+        </div>
+        <div style="margin-top:5px; font-size:9.5px; color:var(--text-muted);">Source: REFI RISK RATING.csv. Total
+          $398M. Ratings 1–2 = Performing. Rating 4 = Watch. 0 losses to date.</div>
+      </div>
+
+      <!-- Illinois Cannabis Sales Trend -->
+      <div class="card">
+        <div class="card-title">
+          <span class="dot" style="background:var(--cannabis-color)"></span>
+          Illinois Monthly Cannabis Sales — Adult-Use vs Medical ($M)
+        </div>
+        <div class="chart-container" style="height:140px">
+          <canvas id="ilSalesChart"></canvas>
+        </div>
+        <div style="margin-top:5px; font-size:9.5px; color:var(--text-muted);">Source: IL IDFPR Retail Sales CSV.
+          Adult-Use launched Jan 2020. 2024 total: ~$2.06B. Strong demand supports borrower cash flows.</div>
+      </div>
+
+    </div>
+
+    <!-- ═══════════════════════ FOOTER ═══════════════════════════ -->
+    <div class="footer">
+      <span>Sources: Chicago Atlantic IR (refi.reit · chicagoatlantic.com), SEC Filings, Illinois IDFPR Cannabis
+        Reports, MJBizDaily 2024 | All figures FY2024 unless noted</span>
+      <span>Prepared by Abel P. · Internship Follow-Up Analysis · March 2025 · <em>For informational purposes
+          only</em></span>
+    </div>
+  </div><!-- end tab-dashboard -->
+
+  <!-- ═══════════════════════ TAB 2: SQL QUERIES ═══════════════ -->
+  <div id="tab-sql" class="tab-content">
+    <div class="doc-sheet">
+      <h2>🗄️ SQL Data Extraction Queries</h2>
+      <p>Below are the SQL queries used to extract and transform data from the 8 source datasets into the dashboard
+        visualizations. These demonstrate structured analytical thinking applied to real Chicago Atlantic financial
+        data.</p>
+
+      <h3>1. REFI Geographic Portfolio Concentration</h3>
+      <p>Source: <span class="data-badge">REFI_GEOGRAPHY.csv</span> — Extracts state-level loan principal distribution
+        across 18 jurisdictions.</p>
+      <div class="sql-block"><span class="sql-comment">-- Query: REFI portfolio geographic breakdown by state</span>
+        <span class="sql-comment">-- Purpose: Identify largest state exposures and limited-license state
+          concentration</span>
+        <span class="sql-keyword">SELECT</span>
+        Jurisdiction,
+        Outstanding_Principal,
+        Portfolio_Pct,
+        <span class="sql-func">SUM</span>(Outstanding_Principal) <span class="sql-keyword">OVER</span> (<span
+          class="sql-keyword">ORDER BY</span> Outstanding_Principal <span class="sql-keyword">DESC</span>
+        <span class="sql-keyword">ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</span>) <span
+          class="sql-keyword">AS</span> Cumulative_Principal,
+        <span class="sql-func">ROUND</span>(<span class="sql-func">SUM</span>(Portfolio_Pct) <span
+          class="sql-keyword">OVER</span> (<span class="sql-keyword">ORDER BY</span> Outstanding_Principal <span
+          class="sql-keyword">DESC</span>
+        <span class="sql-keyword">ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</span>), 1) <span
+          class="sql-keyword">AS</span> Cumulative_Pct
+        <span class="sql-keyword">FROM</span> refi_geography
+        <span class="sql-keyword">WHERE</span> Jurisdiction != <span class="sql-string">'Total'</span>
+        <span class="sql-keyword">ORDER BY</span> Outstanding_Principal <span class="sql-keyword">DESC</span>;
+      </div>
+
+      <h3>2. REFI Credit Risk Rating Distribution by Vintage</h3>
+      <p>Source: <span class="data-badge">REFI_RISK_RATING.csv</span> — Aggregates loan principal by internal risk
+        rating (1-5) and origination year.</p>
+      <div class="sql-block"><span class="sql-comment">-- Query: Risk rating distribution with vintage year
+          breakdown</span>
+        <span class="sql-keyword">SELECT</span>
+        Risk_Rating,
+        <span class="sql-func">COALESCE</span>(Y2025, 0) <span class="sql-keyword">AS</span> Vintage_2025,
+        <span class="sql-func">COALESCE</span>(Y2024, 0) <span class="sql-keyword">AS</span> Vintage_2024,
+        <span class="sql-func">COALESCE</span>(Y2023, 0) <span class="sql-keyword">AS</span> Vintage_2023,
+        <span class="sql-func">COALESCE</span>(Y2022, 0) <span class="sql-keyword">AS</span> Vintage_2022,
+        <span class="sql-func">COALESCE</span>(Y2021, 0) <span class="sql-keyword">AS</span> Vintage_2021,
+        Total,
+        <span class="sql-func">ROUND</span>(Total * 100.0 / <span class="sql-func">SUM</span>(Total) <span
+          class="sql-keyword">OVER</span>(), 1) <span class="sql-keyword">AS</span> Pct_of_Portfolio
+        <span class="sql-keyword">FROM</span> refi_risk_rating
+        <span class="sql-keyword">WHERE</span> Risk_Rating != <span class="sql-string">'Total'</span> <span
+          class="sql-keyword">AND</span> Total > 0
+        <span class="sql-keyword">ORDER BY</span> Risk_Rating;
+      </div>
+
+      <h3>3. Illinois Cannabis Monthly Retail Sales Trend</h3>
+      <p>Source: <span class="data-badge">Retail_Sales_data.csv</span> — Monthly medical + adult-use revenue from Nov
+        2015 to Dec 2025.</p>
+      <div class="sql-block"><span class="sql-comment">-- Query: Monthly cannabis sales by category (2020-2024 focus
+          period)</span>
+        <span class="sql-keyword">SELECT</span>
+        Month_Year,
+        <span class="sql-func">SUM</span>(<span class="sql-keyword">CASE WHEN</span> Measure_Name = <span
+          class="sql-string">'Medical Sales'</span> <span class="sql-keyword">THEN</span> Measure_Value <span
+          class="sql-keyword">ELSE</span> 0 <span class="sql-keyword">END</span>) <span class="sql-keyword">AS</span>
+        Medical_Sales,
+        <span class="sql-func">SUM</span>(<span class="sql-keyword">CASE WHEN</span> Measure_Name = <span
+          class="sql-string">'Adult Use Sales'</span> <span class="sql-keyword">THEN</span> Measure_Value <span
+          class="sql-keyword">ELSE</span> 0 <span class="sql-keyword">END</span>) <span class="sql-keyword">AS</span>
+        Adult_Use_Sales,
+        <span class="sql-func">SUM</span>(Measure_Value) <span class="sql-keyword">AS</span> Total_Sales
+        <span class="sql-keyword">FROM</span> retail_sales
+        <span class="sql-keyword">WHERE</span> <span class="sql-func">YEAR</span>(Month_Year) <span
+          class="sql-keyword">BETWEEN</span> 2020 <span class="sql-keyword">AND</span> 2024
+        <span class="sql-keyword">GROUP BY</span> Month_Year
+        <span class="sql-keyword">ORDER BY</span> Month_Year;
+      </div>
+
+      <h3>4. REFI & LIEN Historical Stock Price Performance</h3>
+      <p>Source: <span class="data-badge">HistoricalData REFI.csv</span> <span class="data-badge">HistoricalData
+          LIEN.csv</span> — Daily OHLCV data for both tickers.</p>
+      <div class="sql-block"><span class="sql-comment">-- Query: Monthly closing prices for REFI and LIEN
+          (joined)</span>
+        <span class="sql-keyword">SELECT</span>
+        r.Trade_Month,
+        r.Close_Price <span class="sql-keyword">AS</span> REFI_Close,
+        l.Close_Price <span class="sql-keyword">AS</span> LIEN_Close,
+        r.Monthly_Volume <span class="sql-keyword">AS</span> REFI_Volume
+        <span class="sql-keyword">FROM</span> (
+        <span class="sql-keyword">SELECT</span> <span class="sql-func">DATE_TRUNC</span>(<span
+          class="sql-string">'month'</span>, Date) <span class="sql-keyword">AS</span> Trade_Month,
+        <span class="sql-func">LAST_VALUE</span>(Close_Price) <span class="sql-keyword">OVER</span> (<span
+          class="sql-keyword">PARTITION BY</span> <span class="sql-func">DATE_TRUNC</span>(<span
+          class="sql-string">'month'</span>, Date) <span class="sql-keyword">ORDER BY</span> Date) <span
+          class="sql-keyword">AS</span> Close_Price,
+        <span class="sql-func">SUM</span>(Volume) <span class="sql-keyword">AS</span> Monthly_Volume
+        <span class="sql-keyword">FROM</span> refi_historical <span class="sql-keyword">GROUP BY</span> 1
+        ) r
+        <span class="sql-keyword">LEFT JOIN</span> (
+        <span class="sql-keyword">SELECT</span> <span class="sql-func">DATE_TRUNC</span>(<span
+          class="sql-string">'month'</span>, Date) <span class="sql-keyword">AS</span> Trade_Month,
+        <span class="sql-func">LAST_VALUE</span>(Close_Price) <span class="sql-keyword">OVER</span> (<span
+          class="sql-keyword">PARTITION BY</span> <span class="sql-func">DATE_TRUNC</span>(<span
+          class="sql-string">'month'</span>, Date) <span class="sql-keyword">ORDER BY</span> Date) <span
+          class="sql-keyword">AS</span> Close_Price
+        <span class="sql-keyword">FROM</span> lien_historical <span class="sql-keyword">GROUP BY</span> 1
+        ) l <span class="sql-keyword">ON</span> r.Trade_Month = l.Trade_Month
+        <span class="sql-keyword">ORDER BY</span> r.Trade_Month;
+      </div>
+
+      <h3>5. Illinois Weekly Retail Sales & Average Pricing</h3>
+      <p>Source: <span class="data-badge">Cannabis_Retail_Sales_by_Week_Ending.csv</span> — Weekly granularity with
+        product counts and average prices.</p>
+      <div class="sql-block"><span class="sql-comment">-- Query: Weekly total sales and average product prices
+          (2024)</span>
+        <span class="sql-keyword">SELECT</span>
+        Week_Ending,
+        Adult_Use_Retail_Sales,
+        Medical_Retail_Sales,
+        Total_Sales,
+        Adult_Use_Avg_Price,
+        Medical_Avg_Price,
+        Total_Products_Sold,
+        <span class="sql-func">AVG</span>(Total_Sales) <span class="sql-keyword">OVER</span> (<span
+          class="sql-keyword">ORDER BY</span> Week_Ending <span class="sql-keyword">ROWS BETWEEN</span> 3 <span
+          class="sql-keyword">PRECEDING AND CURRENT ROW</span>) <span class="sql-keyword">AS</span> Rolling_4Wk_Avg
+        <span class="sql-keyword">FROM</span> cannabis_weekly_sales
+        <span class="sql-keyword">WHERE</span> <span class="sql-func">YEAR</span>(Week_Ending) = 2024
+        <span class="sql-keyword">ORDER BY</span> Week_Ending;
+      </div>
+
+      <h3>6. Adult-Use Price Per Gram Trend Analysis</h3>
+      <p>Source: <span class="data-badge">Adult_Use_Prices_data.csv</span> — Monthly average prices by product category
+        (Buds, Edibles, Concentrates, etc.).</p>
+      <div class="sql-block"><span class="sql-comment">-- Query: Average price per gram by category over time</span>
+        <span class="sql-keyword">SELECT</span>
+        Month_Year,
+        Product_Category,
+        Avg_Price_Per_Gram,
+        <span class="sql-func">LAG</span>(Avg_Price_Per_Gram, 12) <span class="sql-keyword">OVER</span> (<span
+          class="sql-keyword">PARTITION BY</span> Product_Category <span class="sql-keyword">ORDER BY</span> Month_Year)
+        <span class="sql-keyword">AS</span> Price_YoY_Ago,
+        <span class="sql-func">ROUND</span>((Avg_Price_Per_Gram - <span class="sql-func">LAG</span>(Avg_Price_Per_Gram,
+        12) <span class="sql-keyword">OVER</span> (
+        <span class="sql-keyword">PARTITION BY</span> Product_Category <span class="sql-keyword">ORDER BY</span>
+        Month_Year)) /
+        <span class="sql-func">NULLIF</span>(<span class="sql-func">LAG</span>(Avg_Price_Per_Gram, 12) <span
+          class="sql-keyword">OVER</span> (
+        <span class="sql-keyword">PARTITION BY</span> Product_Category <span class="sql-keyword">ORDER BY</span>
+        Month_Year), 0) * 100, 1) <span class="sql-keyword">AS</span> YoY_Change_Pct
+        <span class="sql-keyword">FROM</span> adult_use_prices
+        <span class="sql-keyword">WHERE</span> Product_Category = <span class="sql-string">'Buds'</span>
+        <span class="sql-keyword">ORDER BY</span> Month_Year;
+      </div>
+
+    </div>
+  </div><!-- end tab-sql -->
+
+  <!-- ═══════════════════════ TAB 3: METHODOLOGY & RESEARCH ════ -->
+  <div id="tab-methodology" class="tab-content">
+    <div class="doc-sheet">
+      <h2>📋 Research Methodology & Documentation</h2>
+      <p>This document outlines the analytical methodology, data sources, and research steps undertaken to produce this
+        Chicago Atlantic performance dashboard — demonstrating data analyst skills and deep company understanding.</p>
+
+      <h3>Research Objective</h3>
+      <p>Quantify Chicago Atlantic's business thesis that <strong>regulated-state cannabis lending delivers attractive
+          risk-adjusted returns</strong>, using publicly available financial data, SEC filings, and Illinois cannabis
+        market datasets. Position this analysis as a post-interview follow-up demonstrating:</p>
+      <ul>
+        <li>Proficiency in financial data analysis and data visualization</li>
+        <li>Understanding of Chicago Atlantic's dual-vehicle strategy (REFI mREIT + LIEN BDC)</li>
+        <li>Ability to synthesize quantitative data with qualitative market insights</li>
+        <li>SQL querying and data transformation skills</li>
+      </ul>
+
+      <div class="step-card">
+        <span class="step-num">1</span><span class="step-title">Data Collection & Source Identification</span>
+        <div class="step-desc">
+          Identified and collected 8 primary datasets spanning financial, market, and pricing data:<br>
+          <span class="data-badge">REFI GEOGRAPHY.csv</span> Portfolio geographic breakdown (18 states, $400M)<br>
+          <span class="data-badge">REFI RISK RATING.csv</span> Internal risk ratings by vintage year (2021-2025)<br>
+          <span class="data-badge">HistoricalData REFI.csv</span> Daily REFI stock prices (Dec 2021 – Feb 2026, 1,060
+          rows)<br>
+          <span class="data-badge">HistoricalData LIEN.csv</span> Daily LIEN stock prices (Feb 2022 – Feb 2026, 1,020
+          rows)<br>
+          <span class="data-badge">Retail Sales_data.csv</span> IL monthly cannabis sales by category (2015–2025)<br>
+          <span class="data-badge">Cannabis Retail Sales by Week.csv</span> IL weekly retail data with pricing
+          (2023–2026)<br>
+          <span class="data-badge">Adult Use Prices_data.csv</span> IL adult-use price per gram by product
+          (2020–2025)<br>
+          Supplementary: Chicago Atlantic IR releases, SEC Form 10-K/10-Q, earnings call transcripts
+        </div>
+      </div>
+
+      <div class="step-card">
+        <span class="step-num">2</span><span class="step-title">Financial Performance Analysis</span>
+        <div class="step-desc">
+          <strong>REFI (mREIT):</strong> Analyzed FY2024 results — $410M total loan principal across 30 companies, net
+          income of $37M ($1.88/share), distributable earnings of $40M ($2.03/share), net interest income of $55M.
+          Weighted average yield to maturity: 17.2%. Dividend of $2.06/share (including $0.18 special) = 16.8% forward
+          yield. Book value declined slightly to $14.83/share.<br><br>
+          <strong>LIEN (BDC):</strong> Analyzed FY2024 results — portfolio FMV of $275M (100% senior secured), total
+          investment income of $21.7M, NII of $9.5M ($0.91/share). NAV/share: $13.20. Completed Loan Portfolio
+          Acquisition in Q4 expanding net assets from $82.5M to $301.2M. Q4 dividend raised 36% to $0.34/share = 13.6%
+          forward yield. Zero non-accruals.
+        </div>
+      </div>
+
+      <div class="step-card">
+        <span class="step-num">3</span><span class="step-title">Geographic Portfolio Analysis</span>
+        <div class="step-desc">
+          Used REFI GEOGRAPHY.csv to map portfolio concentration across 18 states. Key findings: Illinois leads at
+          <strong>19% ($77.4M)</strong>, followed by Ohio (16%, $65.1M), Florida (14%, $57.0M), Pennsylvania (9%,
+          $36.3M), and Michigan (8%, $32.1M). Top 5 states represent 66% of total portfolio. ~90% of portfolio deployed
+          in limited-license states — confirming the regulatory moat thesis.
+        </div>
+      </div>
+
+      <div class="step-card">
+        <span class="step-num">4</span><span class="step-title">Credit Quality & Risk Assessment</span>
+        <div class="step-desc">
+          Analyzed REFI RISK RATING.csv — 48% of portfolio rated "2" (low risk), 42% rated "3" (performing), 10% rated
+          "4" (watch). No loans in rating "5" (non-accrual). Zero non-accruals across both REFI and LIEN. LIEN: 80%
+          floating-rate loans with 99% interest rate floors, secured net leverage of 1.5x at borrower level.
+        </div>
+      </div>
+
+      <div class="step-card">
+        <span class="step-num">5</span><span class="step-title">Illinois Cannabis Market Analysis</span>
+        <div class="step-desc">
+          Used IL retail sales data to confirm market health: 2024 total sales exceeded $2.0B (+2.5% YoY), 4th
+          consecutive record year, 3rd largest US market. Unit volume grew +13% YoY. Monthly adult-use sales stabilized
+          at $133-153M range. Average price per gram for flower declined from ~$10 (2023) to ~$6 (late 2025), indicating
+          market maturation and competitive pricing while total revenue still grows — a sign of volume growth outpacing
+          price compression.
+        </div>
+      </div>
+
+      <div class="step-card">
+        <span class="step-num">6</span><span class="step-title">Competitive Moat Analysis</span>
+        <div class="step-desc">
+          Identified three structural moats enabling 17%+ yields: <strong>(1) Banking Exclusion Premium:</strong>
+          Federal Schedule I classification prevents traditional lenders from serving cannabis operators, creating
+          800-1000 bps spread premium. <strong>(2) Limited-License Scarcity:</strong> ~25 states cap operator licenses,
+          producing monopoly-like cash flows. <strong>(3) First-Lien Collateral Stack:</strong> Senior-secured loans
+          backed by real estate, equipment, IP, and state licenses with conservative 1.5x leverage.
+        </div>
+      </div>
+
+      <div class="step-card">
+        <span class="step-num">7</span><span class="step-title">Dashboard Design & Visualization</span>
+        <div class="step-desc">
+          Built an interactive HTML dashboard modeled after Power BI using Chart.js for data visualizations. Design
+          choices: dark theme for financial terminal aesthetic, color-coded REFI (blue) vs LIEN (green) metrics,
+          interactive hover effects, gauge-style progress bars for credit quality metrics. All data embedded inline from
+          CSV sources. Dashboard is self-contained in a single HTML file for easy distribution.
+        </div>
+      </div>
+
+      <h3>Key Findings & Investment Thesis Validation</h3>
+      <ul>
+        <li>✅ <strong>Yield premium confirmed:</strong> REFI's 17.2% WTD YTM vs. 5.2% IG bonds = 1,200 bps spread,
+          compensating for cannabis sector risk</li>
+        <li>✅ <strong>Credit quality validated:</strong> Zero non-accruals across $685M combined AUM; risk ratings
+          concentrated in low-risk tiers</li>
+        <li>✅ <strong>Illinois market is healthy:</strong> $2B+ in sales, 4th record year, limited-license framework
+          protects operator cash flows</li>
+        <li>✅ <strong>Geographic diversification:</strong> Portfolio spread across 18 states; no single state exceeds
+          19% exposure</li>
+        <li>✅ <strong>Dual-vehicle strategy works:</strong> REFI (mREIT) and LIEN (BDC) target same structural alpha via
+          complementary structures</li>
+      </ul>
+
+      <h3>Tools & Technologies Used</h3>
+      <ul>
+        <li>SQL for data extraction and transformation (window functions, CTEs, aggregations)</li>
+        <li>HTML/CSS/JavaScript for interactive dashboard development</li>
+        <li>Chart.js for financial data visualizations</li>
+        <li>SEC EDGAR for regulatory filings (10-K, 10-Q, 8-K)</li>
+        <li>Chicago Atlantic IR (refi.reit, chicagoatlantic.com) for earnings releases</li>
+        <li>Illinois IDFPR for cannabis market regulatory data</li>
+      </ul>
+    </div>
+  </div><!-- end tab-methodology -->
+  <script>
+    /* ─── TAB SWITCHING ─────────────────────────────────────── */
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + tabName).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    /* ─── CHART: Yield Benchmarking ─────────────────────────── */
+    const yieldCtx = document.getElementById('yieldChart').getContext('2d');
+    new Chart(yieldCtx, {
+      type: 'bar',
+      data: {
+        labels: ['IG Corp Bonds', 'HY Bonds', 'Lev. Loans (Avg)', 'BDC Avg Yield', 'LIEN Gross Yield', 'REFI Wtd. YTM'],
+        datasets: [{
+          data: [5.2, 8.1, 10.4, 12.0, 16.5, 17.2],
+          backgroundColor: [
+            'rgba(139,148,158,0.4)',
+            'rgba(139,148,158,0.5)',
+            'rgba(139,148,158,0.6)',
+            'rgba(79,195,247,0.4)',
+            'rgba(165,214,167,0.7)',
+            'rgba(79,195,247,0.85)',
+          ],
+          borderColor: [
+            'rgba(139,148,158,0.8)',
+            'rgba(139,148,158,0.9)',
+            'rgba(139,148,158,1)',
+            'rgba(79,195,247,0.8)',
+            'rgba(165,214,167,1)',
+            'rgba(79,195,247,1)',
+          ],
+          borderWidth: 1.5,
+          borderRadius: 5,
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1c2128',
+            borderColor: '#30363d',
+            borderWidth: 1,
+            callbacks: {
+              label: ctx => ` ${ctx.raw}% yield`
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(48,54,61,0.5)' },
+            ticks: {
+              color: '#8b949e', font: { size: 10 },
+              callback: v => v + '%'
+            },
+            max: 20
+          },
+          y: {
+            grid: { display: false },
+            ticks: { color: '#8b949e', font: { size: 10 } }
+          }
+        }
+      }
+    });
+
+    /* ─── CHART: Portfolio Donut ─────────────────────────────── */
+    const donutCtx = document.getElementById('donutChart').getContext('2d');
+    new Chart(donutCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Cannabis', 'Life Sciences', 'Healthcare', 'Other'],
+        datasets: [{
+          data: [78, 10, 7, 5],
+          backgroundColor: ['#66bb6a', '#4fc3f7', '#8957e5', '#e3b341'],
+          borderWidth: 2,
+          borderColor: '#1c2128',
+          hoverOffset: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '65%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1c2128',
+            borderColor: '#30363d',
+            borderWidth: 1,
+            callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw}%` }
+          }
+        }
+      }
+    });
+
+    /* ─── CHART: REFI Quarterly Trend ───────────────────────── */
+    const trendCtx = document.getElementById('trendChart').getContext('2d');
+    new Chart(trendCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Q1 2024', 'Q2 2024', 'Q3 2024', 'Q4 2024'],
+        datasets: [
+          {
+            label: 'Net Interest Income ($M)',
+            data: [14.1, 13.2, 13.8, 13.9],
+            backgroundColor: 'rgba(79,195,247,0.6)',
+            borderColor: 'rgba(79,195,247,1)',
+            borderWidth: 1.5,
+            borderRadius: 4,
+            yAxisID: 'y'
+          },
+          {
+            label: 'Distributable EPS ($)',
+            data: [0.53, 0.50, 0.51, 0.49],
+            type: 'line',
+            borderColor: '#e3b341',
+            backgroundColor: 'rgba(227,179,65,0.1)',
+            borderWidth: 2,
+            pointBackgroundColor: '#e3b341',
+            pointRadius: 4,
+            tension: 0.3,
+            fill: true,
+            yAxisID: 'y2'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'bottom',
+            labels: { color: '#8b949e', boxWidth: 10, font: { size: 10 }, padding: 8 }
+          },
+          tooltip: {
+            backgroundColor: '#1c2128',
+            borderColor: '#30363d',
+            borderWidth: 1
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(48,54,61,0.5)' },
+            ticks: { color: '#8b949e', font: { size: 10 } }
+          },
+          y: {
+            position: 'left',
+            grid: { color: 'rgba(48,54,61,0.4)' },
+            ticks: { color: '#8b949e', font: { size: 10 }, callback: v => '$' + v + 'M' },
+            min: 10, max: 16
+          },
+          y2: {
+            position: 'right',
+            grid: { display: false },
+            ticks: { color: '#e3b341', font: { size: 10 }, callback: v => '$' + v },
+            min: 0.4, max: 0.65
+          }
+        }
+      }
+    });
+    /* ─── CHART: REFI & LIEN Stock Price (Monthly Close) ─────── */
+    const stockCtx = document.getElementById('stockChart').getContext('2d');
+    // Monthly close prices sampled from NASDAQ historical CSVs (Jan 2024 – Feb 2026)
+    const stockLabels = ['Jan 24', 'Feb 24', 'Mar 24', 'Apr 24', 'May 24', 'Jun 24', 'Jul 24', 'Aug 24', 'Sep 24', 'Oct 24', 'Nov 24', 'Dec 24', 'Jan 25', 'Feb 25', 'Mar 25', 'Apr 25', 'May 25', 'Jun 25', 'Jul 25', 'Aug 25', 'Sep 25', 'Oct 25', 'Nov 25', 'Dec 25', 'Jan 26', 'Feb 26'];
+    const refiClose = [15.99, 16.29, 15.77, 15.59, 15.70, 15.36, 15.98, 15.90, 15.51, 15.12, 16.11, 15.42, 15.37, 16.10, 14.70, 14.47, 14.56, 13.96, 12.99, 14.24, 12.79, 12.86, 12.76, 12.26, 12.26, 12.15];
+    const lienClose = [8.47, 10.14, 9.61, 11.30, 11.35, 11.82, 11.99, 11.46, 10.64, 12.86, 12.80, 12.19, 12.56, 12.20, 11.25, 10.49, 10.14, 10.35, 10.15, 10.99, 10.50, 10.22, 11.03, 10.33, 10.35, 10.03];
+    new Chart(stockCtx, {
+      type: 'line',
+      data: {
+        labels: stockLabels,
+        datasets: [
+          {
+            label: 'REFI ($/share)',
+            data: refiClose,
+            borderColor: '#4fc3f7',
+            backgroundColor: 'rgba(79,195,247,0.08)',
+            borderWidth: 2,
+            pointRadius: 2.5,
+            pointBackgroundColor: '#4fc3f7',
+            fill: true,
+            tension: 0.3,
+            yAxisID: 'y'
+          },
+          {
+            label: 'LIEN ($/share)',
+            data: lienClose,
+            borderColor: '#a5d6a7',
+            backgroundColor: 'rgba(165,214,167,0.06)',
+            borderWidth: 2,
+            pointRadius: 2.5,
+            pointBackgroundColor: '#a5d6a7',
+            fill: true,
+            tension: 0.3,
+            yAxisID: 'y'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'bottom',
+            labels: { color: '#8b949e', boxWidth: 10, font: { size: 10 }, padding: 6 }
+          },
+          tooltip: {
+            backgroundColor: '#1c2128',
+            borderColor: '#30363d',
+            borderWidth: 1,
+            callbacks: { label: ctx => ` ${ctx.dataset.label}: $${ctx.raw.toFixed(2)}` }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(48,54,61,0.4)' },
+            ticks: { color: '#8b949e', font: { size: 9 }, maxTicksLimit: 13 }
+          },
+          y: {
+            grid: { color: 'rgba(48,54,61,0.4)' },
+            ticks: { color: '#8b949e', font: { size: 9 }, callback: v => '$' + v.toFixed(0) },
+            min: 6, max: 18
+          }
+        }
+      }
+    });
+
+    /* ─── CHART: REFI Risk Rating by Vintage ─────────────────── */
+    const riskCtx = document.getElementById('riskChart').getContext('2d');
+    // Data from REFI RISK RATING.csv (values in $000s, converted to $M)
+    new Chart(riskCtx, {
+      type: 'bar',
+      data: {
+        labels: ['2021', '2022', '2023', '2024', '2025'],
+        datasets: [
+          {
+            label: 'Rating 1 (Best)',
+            data: [0, 0.4, 0, 0, 0],
+            backgroundColor: 'rgba(63,185,80,0.85)',
+            borderRadius: 3,
+          },
+          {
+            label: 'Rating 2',
+            data: [0, 43.5, 63.8, 26.8, 56.6],
+            backgroundColor: 'rgba(79,195,247,0.75)',
+            borderRadius: 3,
+          },
+          {
+            label: 'Rating 3',
+            data: [42.4, 46.5, 1.4, 54.8, 21.5],
+            backgroundColor: 'rgba(227,179,65,0.7)',
+            borderRadius: 3,
+          },
+          {
+            label: 'Rating 4 (Watch)',
+            data: [5.0, 0, 0, 16.6, 18.9],
+            backgroundColor: 'rgba(248,81,73,0.6)',
+            borderRadius: 3,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'bottom',
+            labels: { color: '#8b949e', boxWidth: 8, font: { size: 9 }, padding: 5 }
+          },
+          tooltip: {
+            backgroundColor: '#1c2128',
+            borderColor: '#30363d',
+            borderWidth: 1,
+            callbacks: { label: ctx => ` ${ctx.dataset.label}: $${ctx.raw.toFixed(1)}M` }
+          }
+        },
+        scales: {
+          x: {
+            stacked: true,
+            grid: { display: false },
+            ticks: { color: '#8b949e', font: { size: 10 } }
+          },
+          y: {
+            stacked: true,
+            grid: { color: 'rgba(48,54,61,0.4)' },
+            ticks: { color: '#8b949e', font: { size: 9 }, callback: v => '$' + v + 'M' }
+          }
+        }
+      }
+    });
+
+    /* ─── CHART: Illinois Monthly Cannabis Sales (2020–2024) ─── */
+    const ilCtx = document.getElementById('ilSalesChart').getContext('2d');
+    // Aggregated from Retail Sales_data.csv — Monthly totals in $M (Jan 2020 – Dec 2024)
+    const ilLabels = ['Jan 20', 'Apr 20', 'Jul 20', 'Oct 20', 'Jan 21', 'Apr 21', 'Jul 21', 'Oct 21', 'Jan 22', 'Apr 22', 'Jul 22', 'Oct 22', 'Jan 23', 'Apr 23', 'Jul 23', 'Oct 23', 'Jan 24', 'Apr 24', 'Jul 24', 'Oct 24'];
+    const adultUse = [39.0, 37.3, 61.0, 75.3, 88.8, 115.0, 127.8, 123.4, 117.2, 131.8, 135.7, 131.5, 127.9, 132.0, 140.0, 138.7, 133.8, 144.5, 143.3, 142.2];
+    const medical = [23.4, 31.1, 33.3, 33.1, 32.7, 35.3, 34.3, 31.9, 29.7, 31.8, 29.0, 28.5, 27.6, 28.0, 26.8, 26.2, 24.3, 25.1, 23.4, 22.2];
+    new Chart(ilCtx, {
+      type: 'bar',
+      data: {
+        labels: ilLabels,
+        datasets: [
+          {
+            label: 'Adult-Use ($M)',
+            data: adultUse,
+            backgroundColor: 'rgba(102,187,106,0.7)',
+            borderRadius: 2,
+          },
+          {
+            label: 'Medical ($M)',
+            data: medical,
+            backgroundColor: 'rgba(46,160,67,0.45)',
+            borderRadius: 2,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'bottom',
+            labels: { color: '#8b949e', boxWidth: 8, font: { size: 9 }, padding: 5 }
+          },
+          tooltip: {
+            backgroundColor: '#1c2128',
+            borderColor: '#30363d',
+            borderWidth: 1,
+            callbacks: { label: ctx => ` ${ctx.dataset.label}: $${ctx.raw.toFixed(1)}M` }
+          }
+        },
+        scales: {
+          x: {
+            stacked: true,
+            grid: { display: false },
+            ticks: { color: '#8b949e', font: { size: 9 }, maxTicksLimit: 10 }
+          },
+          y: {
+            stacked: true,
+            grid: { color: 'rgba(48,54,61,0.4)' },
+            ticks: { color: '#8b949e', font: { size: 9 }, callback: v => '$' + v + 'M' }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+
+</html>
